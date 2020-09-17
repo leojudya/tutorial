@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>WebSocket demo</title>
+  </head>
+  <body>
+    <script>
+      const delay = (interval) => {
+        return new Promise((resolve) => {
+          setTimeout(resolve, interval);
+        });
+      };
+
+      var ws = new WebSocket("ws://localhost:8765"),
+        messages = document.createElement("ul");
+      ws.onmessage = async function (event) {
+        var messages = document.getElementsByTagName("ul")[0],
+          message = document.createElement("li"),
+          content = document.createTextNode(`${event.data}`);
+        message.appendChild(content);
+        messages.appendChild(message);
+      };
+      document.body.appendChild(messages);
+    </script>
+  </body>
+</html>
