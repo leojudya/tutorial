@@ -1,34 +1,26 @@
 import asyncio
 import websockets
-import time
 import psutil
+import time
+import json
 import os
-from psutil._common import bytes2human
-
     
 async def hello(websocket, path):
     while True:
-        t = time.strftime("%Y-%M-%d %H:%M:%S", time.localtime())
-        await websocket.send(t)
-        cpu_percent = "CPU: " + str(psutil.cpu_percent()) + "%"
-        await websocket.send(cpu_percent)
-        vir = str(psutil.virtual_memory().percent)
-        swap = str(psutil.swap_memory().percent)
-        await websocket.send(vir)
-        await websocket.send(swap)
+        j = {}        
+        j["time"] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        j["cpu"] = str(psutil.cpu_percent()) + "%"
+        j["memory"] = str(psutil.virtual_memory().percent)
+        # swap = str(psutil.swap_memory().percent)
+        j["disk"] = []
         for part in psutil.disk_partitions(all=False):
             if os.name == 'nt':
                 if 'cdrom' in part.opts or part.fstype == '':
-                    # skip cd-rom drives with no disk in it; they may raise
-                    # ENOENT, pop-up a Windows GUI error for a non-ready
-                    # partition or just hang.
                     continue
             usage = psutil.disk_usage(part.mountpoint)
-            await websocket.send(f"{part.device} {int(usage.percent)}")
-        await websocket.send("End")
-
+            j["disk"].append({part.device:int(usage.percent)})
+        await websocket.send(json.dumps(j, sort_keys=True, indent=4))
         await asyncio.sleep(1)
-
     
 
 start_server = websockets.serve(hello, "localhost", 8765)
